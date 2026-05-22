@@ -1,0 +1,12 @@
+{
+  "name": "rentlens",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI-powered rental inspection assistant for tenants.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

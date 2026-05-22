@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RentLens AI - AI 租房看房助手</title>
+    <link rel="stylesheet" href="./styles.css?v=20260522-3" />
+  </head>
+  <body>
+    <input class="drawer-toggle" id="reminderToggle" type="checkbox" />
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">R</div>
+          <div>
+            <strong>RentLens AI</strong>
+            <span>租前看房决策助手</span>
+          </div>
+        </div>
+
+        <nav class="nav-list" aria-label="主要流程">
+          <button class="nav-item active" data-panel="overview">
+            <span>概览</span>
+            <small>拍照建档</small>
+          </button>
+          <button class="nav-item" data-panel="scan">
+            <span>现场检测</span>
+            <small>照片/录音/备注</small>
+          </button>
+          <button class="nav-item" data-panel="checklist">
+            <span>AI 检查</span>
+            <small>自动结论</small>
+          </button>
+          <button class="nav-item" data-panel="report">
+            <span>房源分析</span>
+            <small>租前判断</small>
+          </button>
+        </nav>
+
+        <div class="sidebar-note">
+          <span class="status-dot"></span>
+          先保存房源，再逐项完成现场检测，最后生成租前判断。
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Rental decision copilot</p>
+          </div>
+          <div class="top-actions">
+            <button class="ghost-button" id="newListing">新建房源</button>
+            <button class="primary-button" id="saveListing">保存房源</button>
+          </div>
+        </header>
+
+        <section class="panel active" id="overview">
+          <div class="overview-grid">
+            <div class="photo-uploader">
+              <img id="coverPhoto" alt="当前房源照片预览" />
+              <div class="empty-photo" id="emptyPhoto">
+                <div class="camera-cross" aria-hidden="true"></div>
+                <strong>拍照记录</strong>
+                <span>保存当前房源封面，后续检测会记录在这套房源下。</span>
+              </div>
+              <div class="photo-action scan-photo-actions">
+                <label class="upload-button">
+                  拍照记录
+                  <input type="file" id="coverCamera" accept="image/*" capture="environment" />
+                </label>
+                <label class="ghost-button">
+                  从相册补传
+                  <input type="file" id="coverUpload" accept="image/*" />
+                </label>
+              </div>
+            </div>
+
+            <form class="listing-form">
+              <label>
+                房源名称
+                <input id="listingName" value="滨江路 1 室 1 厅" />
+              </label>
+              <label>
+                月租
+                <input id="rentPrice" value="3200" inputmode="numeric" />
+              </label>
+              <label>
+                通勤时间
+                <input id="commuteTime" value="35 分钟" />
+              </label>
+              <label>
+                地址/位置
+                <input id="listingLocation" value="滨江路地铁站附近" />
+              </label>
+              <label>
+                看房备注
+                <textarea id="listingNote">采光不错，卫生间墙角有一点潮，房东说可以重新打扫。</textarea>
+              </label>
+            </form>
+          </div>
+
+          <div class="saved-section">
+            <div class="section-heading compact">
+              <div>
+                <p class="eyebrow">Saved homes</p>
+                <h2>已保存房源</h2>
+              </div>
+              <div class="saved-actions">
+                <label class="ghost-button small-button" id="openReminderFromOverview" for="reminderToggle">签约前提醒</label>
+                <span id="savedCount">0 套</span>
+              </div>
+            </div>
+            <div class="saved-list" id="savedList"></div>
+          </div>
+        </section>
+
+        <section class="panel" id="scan">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Guided scan</p>
+            </div>
+            <button class="primary-button" id="runScan">完成本项检测</button>
+          </div>
+
+          <div class="scan-layout">
+            <div class="field-kit">
+              <div class="photo-stage compact-stage">
+                <img id="roomPhoto" alt="当前检测照片" />
+                <div class="empty-photo scan-empty" id="scanEmpty">
+                  <div class="camera-cross" aria-hidden="true"></div>
+                  <strong>拍照记录</strong>
+                  <span>按拍摄点依次记录关键位置</span>
+                </div>
+                <div class="photo-action scan-photo-actions">
+                  <label class="upload-button">
+                    拍照记录
+                    <input type="file" id="scanCamera" accept="image/*" capture="environment" multiple />
+                  </label>
+                  <label class="ghost-button">
+                    从相册补传
+                    <input type="file" id="scanUpload" accept="image/*" multiple />
+                  </label>
+                </div>
+              </div>
+              <div class="photo-evidence">
+                <div class="evidence-head">
+                  <strong>本项照片证据</strong>
+                  <button class="ghost-button small-button" id="clearStepPhotos" type="button">清空照片</button>
+                </div>
+                <div class="evidence-list" id="evidenceList"></div>
+              </div>
+
+              <div class="input-panel">
+                <div class="audio-box">
+                  <div>
+                    <p class="eyebrow">Audio check</p>
+                    <h3>环境录音</h3>
+                    <span id="recordStatus">未录音</span>
+                  </div>
+                  <button class="ghost-button" id="recordButton" type="button">开始录音</button>
+                </div>
+
+                <div class="noise-meter">
+                  <div class="meter-head">
+                    <div>
+                      <strong>噪音分贝估算</strong>
+                      <span>建议开窗/关窗各测一次，夜间再复测。</span>
+                    </div>
+                    <div class="live-db">
+                      <strong id="liveDb">--</strong>
+                      <span>dB</span>
+                    </div>
+                  </div>
+                  <div class="meter-track">
+                    <div id="meterFill"></div>
+                  </div>
+                  <div class="db-stats">
+                    <span>平均：<strong id="avgDb">--</strong> dB</span>
+                    <span>峰值：<strong id="peakDb">--</strong> dB</span>
+                    <span id="noiseRisk">未检测</span>
+                  </div>
+                  <label class="calibration-control">
+                    设备校准偏移
+                    <input id="calibrationOffset" type="number" value="45" min="20" max="80" />
+                    <small>可按现场感受微调噪音估算结果。</small>
+                  </label>
+                </div>
+
+                <label class="field-note">
+                  现场文字记录
+                  <textarea
+                    id="fieldNote"
+                    placeholder="例如：卫生间有轻微反味；关窗后车流声变小；房东说押金 7 天内退。"
+                  ></textarea>
+                </label>
+              </div>
+            </div>
+
+            <aside class="scan-side">
+              <div class="step-card current">
+                <span id="stepIndex">步骤 1 / 6</span>
+                <h3 id="currentStepName">床和睡眠区</h3>
+                <div class="method-pill" id="currentStepMethod">拍照 + 现场感受</div>
+                <p id="currentStepPrompt">拍床垫、床架、墙角和窗边，重点看异味、潮湿、噪音和安全感。</p>
+                <small id="currentStepAction">拍床垫、床架、墙角和窗边。</small>
+                <div class="shot-guide" id="shotGuide"></div>
+              </div>
+              <div class="step-list" id="stepList"></div>
+            </aside>
+          </div>
+
+          <div class="ai-result" id="aiResult">
+            <span>等待检测</span>
+            <h3>完成当前步骤后，这里会显示检测结果。</h3>
+            <p>结果会说明风险、居住影响和建议处理方式。</p>
+          </div>
+        </section>
+
+        <section class="panel" id="checklist">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">AI inspection</p>
+            </div>
+            <button class="ghost-button" id="clearResults">清空检测</button>
+          </div>
+          <div class="inspection-grid" id="inspectionGrid"></div>
+        </section>
+
+        <section class="panel" id="report">
+          <div class="report-header">
+            <div>
+              <p class="eyebrow">Home analysis</p>
+              <h2 id="reportTitle">房源分析</h2>
+            </div>
+            <div class="score-ring">
+              <strong id="scoreValue">76</strong>
+              <span>当前评分</span>
+            </div>
+          </div>
+
+          <div class="report-grid">
+            <div class="score-board" id="scoreBoard"></div>
+            <div class="questions-box">
+              <h3>建议追问房东</h3>
+              <ul id="questionList"></ul>
+            </div>
+          </div>
+
+          <div class="analysis-summary">
+            <div class="comparison-header">
+              <h3>当前房源决策摘要</h3>
+              <span>根据现场检测和签约前提醒生成。</span>
+            </div>
+            <div class="summary-grid" id="analysisSummary"></div>
+          </div>
+
+          <div class="report-export">
+            <div>
+              <p class="eyebrow">Viewing report</p>
+              <h3>看房报告</h3>
+              <span>整理当前房源的照片、现场记录、风险和追问建议。</span>
+            </div>
+            <div class="report-actions">
+              <button class="ghost-button" id="previewReport" type="button">预览报告</button>
+              <button class="primary-button" id="downloadReport" type="button">下载报告</button>
+              <button class="primary-button" id="downloadWordReport" type="button">下载 Word</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="noHomeModal" aria-hidden="true">
+      <section class="notice-modal" role="dialog" aria-modal="true" aria-labelledby="noHomeTitle">
+        <button class="modal-close" id="closeNoHomeModal" aria-label="关闭">×</button>
+        <p class="eyebrow">Need a saved home</p>
+        <h2 id="noHomeTitle">未选择房源</h2>
+        <p>请先保存当前房源，再记录照片、录音或检测结果。</p>
+        <button class="primary-button" id="goOverviewFromNotice" type="button">去保存房源</button>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" id="reportModal" aria-hidden="true">
+      <section class="analysis-modal report-modal" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
+        <button class="modal-close" id="closeReportModal" aria-label="关闭">×</button>
+        <div class="report-preview-head">
+          <p class="eyebrow">Viewing report</p>
+          <h2 id="reportModalTitle">看房报告</h2>
+        </div>
+        <div class="report-preview" id="reportPreviewContent"></div>
+        <div class="modal-actions">
+          <button class="ghost-button" id="downloadReportFromModal" type="button">下载报告</button>
+          <button class="ghost-button" id="downloadWordReportFromModal" type="button">下载 Word</button>
+          <button class="primary-button" id="closeReportModalAction" type="button">完成</button>
+        </div>
+      </section>
+    </div>
+
+    <aside class="reminder-drawer" id="reminderDrawer" aria-hidden="true">
+      <div class="drawer-head">
+        <div>
+          <p class="eyebrow">Before signing</p>
+          <h2>签约前提醒清单</h2>
+          <span id="reminderProgress">0 / 0 已留证</span>
+        </div>
+        <label class="modal-close drawer-close" id="closeReminderDrawer" aria-label="关闭" for="reminderToggle">×</label>
+      </div>
+      <div class="drawer-body" id="reminderList">
+        <details class="reminder-group" open>
+          <summary><strong>费用类</strong><span>提醒确认</span></summary>
+          <div class="reminder-items">
+            <article class="reminder-item"><p>月租是否包含物业费、网费、管理费？</p></article>
+            <article class="reminder-item"><p>水电燃气怎么计费？</p></article>
+            <article class="reminder-item"><p>是否民水民电？</p></article>
+            <article class="reminder-item"><p>是否有中介费/服务费？</p></article>
+            <article class="reminder-item"><p>押几付几？</p></article>
+            <article class="reminder-item"><p>押金什么时候退？</p></article>
+          </div>
+        </details>
+        <details class="reminder-group" open>
+          <summary><strong>退租类</strong><span>提醒确认</span></summary>
+          <div class="reminder-items">
+            <article class="reminder-item"><p>能否提前退租？</p></article>
+            <article class="reminder-item"><p>提前退租扣多少钱？</p></article>
+            <article class="reminder-item"><p>能否转租？</p></article>
+            <article class="reminder-item"><p>找到下家后是否能退押金？</p></article>
+          </div>
+        </details>
+        <details class="reminder-group" open>
+          <summary><strong>维修类</strong><span>提醒确认</span></summary>
+          <div class="reminder-items">
+            <article class="reminder-item"><p>家电坏了谁修？</p></article>
+            <article class="reminder-item"><p>管道堵塞谁负责？</p></article>
+            <article class="reminder-item"><p>墙面返潮/漏水谁负责？</p></article>
+            <article class="reminder-item"><p>维修响应时间多久？</p></article>
+          </div>
+        </details>
+        <details class="reminder-group">
+          <summary><strong>交付类</strong><span>提醒确认</span></summary>
+          <div class="reminder-items">
+            <article class="reminder-item"><p>家具有哪些？</p></article>
+            <article class="reminder-item"><p>哪些东西已有损坏？</p></article>
+            <article class="reminder-item"><p>是否有交付清单？</p></article>
+            <article class="reminder-item"><p>房东承诺维修的内容什么时候完成？</p></article>
+          </div>
+        </details>
+        <details class="reminder-group">
+          <summary><strong>身份类</strong><span>提醒确认</span></summary>
+          <div class="reminder-items">
+            <article class="reminder-item"><p>房东是否为产权人？</p></article>
+            <article class="reminder-item"><p>是否二房东？</p></article>
+            <article class="reminder-item"><p>是否能看房产证/委托书？</p></article>
+            <article class="reminder-item"><p>合租的话室友是否固定？</p></article>
+          </div>
+        </details>
+        <details class="reminder-group">
+          <summary><strong>居住规则类</strong><span>提醒确认</span></summary>
+          <div class="reminder-items">
+            <article class="reminder-item"><p>能否养宠物？</p></article>
+            <article class="reminder-item"><p>能否做饭？</p></article>
+            <article class="reminder-item"><p>能否留宿？</p></article>
+            <article class="reminder-item"><p>是否限电限水？</p></article>
+            <article class="reminder-item"><p>是否可以办居住证？</p></article>
+          </div>
+        </details>
+        <details class="reminder-group">
+          <summary><strong>安全类</strong><span>提醒确认</span></summary>
+          <div class="reminder-items">
+            <article class="reminder-item"><p>门锁能否更换？</p></article>
+            <article class="reminder-item"><p>是否有消防隐患？</p></article>
+            <article class="reminder-item"><p>是否隔断房？</p></article>
+            <article class="reminder-item"><p>是否群租房？</p></article>
+          </div>
+        </details>
+      </div>
+    </aside>
+    <label class="drawer-scrim" id="drawerScrim" for="reminderToggle"></label>
+
+    <script src="./api/bootstrap.js?v=20260522-1"></script>
+    <script src="./app.js?v=20260522-4"></script>
+  </body>
+</html>

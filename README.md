@@ -1,47 +1,53 @@
-# RentLens
+# 租房避坑助手
 
-RentLens is an AI-powered rental inspection assistant for tenants. It helps users record on-site viewing evidence, save multiple rental homes, analyze housing risks, track signing questions, and generate exportable viewing reports.
+一个面向租客的 AI 看房辅助工具。用户可以在看房现场保存房源、拍照记录、录音测噪、填写现场备注，并按房源沉淀检测结果，最后生成看房报告和租前建议。
 
-## Features
+## 项目简介
 
-- Guided rental inspection flow
-- Photo evidence for each inspection step
-- Audio recording and estimated noise levels
-- Per-home saved inspection state
-- Signing reminder checklist
-- AI-backed field inspection analysis through DeepSeek
-- Home analysis and viewing report UI
-- HTML and Word report export
-- OpenID-based data isolation structure for future WeChat Mini Program login
+租房看房时，很多问题靠一次肉眼观察很容易漏掉，比如墙面返潮、卫生间反味、噪音、插座用电、门锁安全、押金退租条款和维修责任。这个项目希望把看房流程拆成一步一步的现场检测，让租客在看房时有记录、有提醒、有对比，也能把关键信息整理成报告。
 
-## Local Development
+## 核心功能
 
-Create an environment file:
+- 多套房源保存和切换
+- 每套房源独立保存照片、录音、备注和检测结果
+- 现场检测引导，包括床和睡眠区、墙面、卫生间、厨房、插座、门锁、窗户噪音、合同费用
+- 拍照记录和相册补传
+- 录音测噪和分贝估算
+- 签约前提醒清单
+- DeepSeek AI 风险分析接口
+- 房源分析页和看房报告
+- 支持导出 HTML 报告和 Word 报告
+- 预留微信小程序 openid 数据隔离结构
+
+## 本地运行
+
+创建环境变量文件：
 
 ```env
 DEEPSEEK_API_KEY=your_deepseek_api_key
 DEEPSEEK_MODEL=deepseek-chat
 ```
 
-Start the local server:
+启动服务：
 
 ```bash
 node server.js
 ```
 
-Open:
+浏览器打开：
 
 ```text
 http://localhost:5174/index.html
 ```
 
-## Deployment Note
+## 部署说明
 
-This project includes a local demo backend that stores JSON data and uploads on disk. For real multi-user production use, replace local file storage with:
+当前版本适合产品 Demo 和作品集展示。项目内置的是本地 JSON 数据存储和本地文件上传目录，真实多人使用时建议替换为：
 
-- a database for homes, reminders, reports, and users
-- object storage for photos and audio
-- real WeChat Mini Program login to obtain `openid`
-- AI request rate limiting and usage control
+- 数据库：保存用户、房源、检测结果、提醒清单和报告
+- 对象存储：保存照片、录音和报告文件
+- 微信小程序登录：获取真实 `openid`
+- AI 调用限流：控制接口成本和滥用风险
+- 后台管理：查看用户量、调用量、异常日志
 
-Vercel can host the demo interface and serverless API structure, but local file persistence is not suitable for production on Vercel.
+Vercel 可以用于部署演示版本，但不适合长期保存本地上传文件和 JSON 数据。

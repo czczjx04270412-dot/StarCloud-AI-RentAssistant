@@ -2,7 +2,7 @@
   "name": "rentlens",
   "version": "1.0.0",
   "private": true,
-  "description": "AI-powered rental inspection assistant for tenants.",
+  "description": "面向租客的 AI 租房看房避坑助手。",
   "scripts": {
     "start": "node server.js"
   },

@@ -4,8 +4,10 @@ const path = require("path");
 
 const PORT = Number(process.env.PORT || 5174);
 const ROOT = __dirname;
-const DATA_DIR = path.join(ROOT, "data");
-const UPLOAD_DIR = path.join(ROOT, "uploads");
+const IS_VERCEL = Boolean(process.env.VERCEL);
+const RUNTIME_DIR = IS_VERCEL ? path.join("/tmp", "rentlens") : ROOT;
+const DATA_DIR = path.join(RUNTIME_DIR, "data");
+const UPLOAD_DIR = path.join(RUNTIME_DIR, "uploads");
 const HOMES_FILE = path.join(DATA_DIR, "homes.json");
 const REMINDERS_FILE = path.join(DATA_DIR, "reminders.json");
 const DEMO_OPENID = "demo_openid_for_miniprogram";
@@ -243,8 +245,10 @@ function safeExt(name = "", type = "") {
 function serveStatic(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const rawPath = decodeURIComponent(url.pathname === "/" ? "/index.html" : url.pathname);
-  const filePath = path.normalize(path.join(ROOT, rawPath));
-  if (!filePath.startsWith(ROOT)) {
+  const baseDir = rawPath.startsWith("/uploads/") ? UPLOAD_DIR : ROOT;
+  const relativePath = rawPath.startsWith("/uploads/") ? rawPath.replace(/^\/uploads\/?/, "") : rawPath;
+  const filePath = path.normalize(path.join(baseDir, relativePath));
+  if (!filePath.startsWith(baseDir)) {
     res.writeHead(403);
     res.end("Forbidden");
     return;
@@ -370,7 +374,7 @@ async function handleRequest(req, res) {
       fs.mkdirSync(userUploadDir, { recursive: true });
       fs.writeFileSync(path.join(userUploadDir, filename), buffer);
       sendJson(res, 200, {
-        url: `http://localhost:${PORT}/uploads/${openid}/${filename}`,
+        url: `/uploads/${openid}/${filename}`,
         name: filename,
         type,
         size: buffer.length,

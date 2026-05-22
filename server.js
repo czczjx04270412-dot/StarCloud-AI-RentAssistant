@@ -254,13 +254,16 @@ function serveStatic(req, res) {
     return;
   }
 
-  fs.readFile(filePath, (error, data) => {
+  const fallbackPath = rawPath.startsWith("/uploads/") ? filePath : path.normalize(path.join(process.cwd(), relativePath));
+  const targetPath = fs.existsSync(filePath) ? filePath : fallbackPath;
+
+  fs.readFile(targetPath, (error, data) => {
     if (error) {
       res.writeHead(404);
       res.end("Not found");
       return;
     }
-    const ext = path.extname(filePath).toLowerCase();
+    const ext = path.extname(targetPath).toLowerCase();
     const type =
       ext === ".html" ? "text/html; charset=utf-8" :
       ext === ".css" ? "text/css; charset=utf-8" :
@@ -272,7 +275,7 @@ function serveStatic(req, res) {
       ext === ".webm" ? "audio/webm" :
       "application/octet-stream";
     let output = data;
-    if (path.basename(filePath) === "index.html") {
+    if (path.basename(targetPath) === "index.html") {
       const defaultReq = { headers: { "x-rentlens-user": DEMO_OPENID } };
       const payload = {
         homes: readUserJson(defaultReq, "homes.json", [], HOMES_FILE),

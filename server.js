@@ -346,6 +346,16 @@ async function handleRequest(req, res) {
       return;
     }
 
+    if (url.pathname === "/api/ai/status" && req.method === "GET") {
+      sendJson(res, 200, {
+        ok: true,
+        hasDeepSeekKey: Boolean(process.env.DEEPSEEK_API_KEY),
+        model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
+        runtime: process.env.VERCEL ? "vercel" : "local",
+      });
+      return;
+    }
+
     if (url.pathname === "/api/ai/analyze" && req.method === "POST") {
       const payload = JSON.parse(await readBody(req) || "{}");
       const allowedSkills = new Set(["field_inspection", "home_analysis", "anti_trap_check", "report_writer"]);

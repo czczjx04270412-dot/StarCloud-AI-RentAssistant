@@ -1,0 +1,174 @@
+<view class="page">
+  <view class="tabs">
+    <view class="tab {{activeTab === 'overview' ? 'active' : ''}}" bindtap="switchTab" data-tab="overview">概览</view>
+    <view class="tab {{activeTab === 'scan' ? 'active' : ''}}" bindtap="switchTab" data-tab="scan">现场检测</view>
+    <view class="tab {{activeTab === 'checklist' ? 'active' : ''}}" bindtap="switchTab" data-tab="checklist">AI 检查</view>
+    <view class="tab {{activeTab === 'report' ? 'active' : ''}}" bindtap="switchTab" data-tab="report">房源分析</view>
+  </view>
+
+  <view wx:if="{{activeTab === 'overview'}}" class="section">
+    <view class="photo-box" bindtap="chooseCover">
+      <image wx:if="{{form.photo}}" class="cover" src="{{form.photo}}" mode="aspectFit"></image>
+      <view wx:else class="empty-photo">
+        <view class="plus">+</view>
+        <text>拍照记录</text>
+      </view>
+    </view>
+
+    <view class="form-card">
+      <text class="label">房源名称</text>
+      <input value="{{form.name}}" data-field="name" bindinput="updateField" placeholder="请输入房源名称" />
+
+      <text class="label">月租</text>
+      <input value="{{form.rent}}" data-field="rent" bindinput="updateField" type="number" placeholder="请输入月租" />
+
+      <text class="label">通勤时间</text>
+      <input value="{{form.commute}}" data-field="commute" bindinput="updateField" placeholder="请输入通勤时间" />
+
+      <text class="label">地址/位置</text>
+      <input value="{{form.location}}" data-field="location" bindinput="updateField" placeholder="请输入地址或位置" />
+
+      <text class="label">看房备注</text>
+      <textarea value="{{form.note}}" data-field="note" bindinput="updateField" placeholder="请输入看房备注"></textarea>
+
+      <button class="primary" bindtap="saveHome">保存房源</button>
+    </view>
+
+    <view class="saved">
+      <view class="section-title">已保存房源</view>
+      <view wx:if="{{homes.length === 0}}" class="empty-state">还没有保存房源。</view>
+      <view wx:for="{{homes}}" wx:key="id" class="home-card {{selectedHomeId === item.id ? 'selected' : ''}}" bindtap="selectHome" data-id="{{item.id}}">
+        <view class="thumb">
+          <image wx:if="{{item.photo}}" src="{{item.photo}}" mode="aspectFit"></image>
+          <text wx:else>无图</text>
+        </view>
+        <view>
+          <view class="home-name">{{item.name || '未命名房源'}}{{selectedHomeId === item.id ? ' · 当前' : ''}}</view>
+          <view class="home-meta">{{item.location || '待确认'}} · {{item.rent || '待确认'}} 元/月</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:elif="{{activeTab === 'scan'}}" class="section">
+    <view wx:if="{{!selectedHomeId}}" class="notice">请先在概览保存并选择房源。</view>
+    <view wx:else>
+      <view class="step-panel">
+        <text class="step-count">步骤 {{currentStepIndex + 1}} / {{steps.length}}</text>
+        <view class="step-name">{{currentStep.name}}</view>
+        <view class="method">{{currentStep.method}}</view>
+        <view class="step-action">{{currentStep.action}}</view>
+      </view>
+
+      <view class="shot-tags">
+        <text wx:for="{{currentStep.shots}}" wx:key="*this">{{item}}</text>
+      </view>
+
+      <view class="photo-grid">
+        <view wx:for="{{currentPhotos}}" wx:key="url" class="photo-item">
+          <image src="{{item.url}}" mode="aspectFill" bindtap="previewPhoto" data-url="{{item.url}}"></image>
+          <button class="delete-photo" bindtap="deleteStepPhoto" data-index="{{index}}">×</button>
+          <text>{{item.label}}</text>
+        </view>
+        <view class="add-photo" bindtap="chooseStepPhoto">
+          <view class="plus small">+</view>
+          <text>拍照/上传</text>
+        </view>
+      </view>
+
+      <textarea class="field-note" value="{{fieldNote}}" bindinput="updateFieldNote" placeholder="请输入现场记录"></textarea>
+      <button class="primary" loading="{{aiLoading}}" bindtap="completeStep">完成本项检测并 AI 分析</button>
+
+      <view wx:if="{{currentResult}}" class="mini-result">
+        <text>{{currentResult.ai ? currentResult.ai.level : '已保存现场记录，等待 AI 分析'}}</text>
+      </view>
+
+      <view class="step-list">
+        <view wx:for="{{steps}}" wx:key="id" class="step-item {{index === currentStepIndex ? 'active' : ''}}" bindtap="goStep" data-index="{{index}}">
+          <text>{{index + 1}}</text>
+          <view>{{item.name}}</view>
+          <text>{{scanResults[item.id] ? '已记录' : '待检测'}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:elif="{{activeTab === 'checklist'}}" class="section">
+    <view wx:if="{{!selectedHomeId}}" class="notice">请选择房源后查看 AI 检查结果。</view>
+    <view wx:else>
+      <view class="ai-template-head">
+        <view>
+          <view class="section-title">AI 检查</view>
+          <view class="home-meta">{{selectedHome.name || '当前房源'}} · {{completedCount}} / {{steps.length}} 项</view>
+        </view>
+        <button class="secondary small-button" loading="{{aiLoading}}" bindtap="completeStep">分析当前项</button>
+      </view>
+
+      <view wx:for="{{steps}}" wx:key="id" class="ai-card {{scanResults[item.id].ai ? 'ready' : ''}}">
+        <view class="ai-card-head">
+          <view>
+            <view class="ai-step-name">{{index + 1}}. {{item.name}}</view>
+            <view class="home-meta">{{item.method}}</view>
+          </view>
+          <view class="risk-pill">{{scanResults[item.id].ai ? scanResults[item.id].ai.level : (scanResults[item.id] ? '待分析' : '未检测')}}</view>
+        </view>
+
+        <view wx:if="{{scanResults[item.id].ai}}">
+          <view class="ai-title">{{scanResults[item.id].ai.title}}</view>
+          <view class="ai-block">
+            <text class="ai-label">居住影响</text>
+            <text>{{scanResults[item.id].ai.livingImpact || '暂无'}}</text>
+          </view>
+          <view class="ai-block">
+            <text class="ai-label">建议追问</text>
+            <text wx:for="{{scanResults[item.id].ai.askLandlord}}" wx:key="*this">• {{item}}</text>
+          </view>
+          <view class="ai-block">
+            <text class="ai-label">还需补查</text>
+            <text wx:for="{{scanResults[item.id].ai.missingChecks}}" wx:key="*this">• {{item}}</text>
+          </view>
+        </view>
+
+        <view wx:elif="{{scanResults[item.id]}}" class="empty-state">
+          已记录照片或文字，但还没有 AI 结论。切到现场检测页，点“完成本项检测并 AI 分析”。
+        </view>
+
+        <view wx:else class="empty-state">
+          还没有检测材料。
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:elif="{{activeTab === 'report'}}" class="section">
+    <view wx:if="{{!selectedHomeId}}" class="notice">请选择房源后查看分析。</view>
+    <view wx:else>
+      <view class="report-head">
+        <view>
+          <view class="section-title">{{selectedHome.name || '当前房源'}}</view>
+          <view class="home-meta">{{selectedHome.location || '待确认'}} · {{selectedHome.rent || '待确认'}} 元/月</view>
+        </view>
+        <view class="score">{{score}}</view>
+      </view>
+
+      <view class="report-card">
+        <view class="section-title">检测进度</view>
+        <view class="progress-bar"><view style="width: {{progress}}%;"></view></view>
+        <text>{{completedCount}} / {{steps.length}} 项已完成</text>
+      </view>
+
+      <view class="report-card">
+        <view class="section-title">当前建议</view>
+        <text>{{advice}}</text>
+      </view>
+
+      <view class="report-card">
+        <view class="section-title">检测结果</view>
+        <view wx:for="{{steps}}" wx:key="id" class="report-result">
+          <text>{{item.name}}</text>
+          <text>{{scanResults[item.id].ai ? scanResults[item.id].ai.level : (scanResults[item.id] ? '已记录' : '待检测')}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

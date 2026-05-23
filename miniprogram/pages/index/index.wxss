@@ -120,6 +120,24 @@ textarea {
   font-size: 30rpx;
 }
 
+.form-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16rpx;
+  margin-top: 24rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-actions .primary,
+.form-actions .secondary {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0 12rpx;
+  box-sizing: border-box;
+}
+
 .primary {
   background: #126354;
   color: #ffffff;
@@ -435,6 +453,28 @@ textarea {
   font-weight: 800;
 }
 
+.small-score {
+  width: 92rpx;
+  height: 92rpx;
+  font-size: 28rpx;
+}
+
+.analysis-card {
+  margin-top: 24rpx;
+  padding: 24rpx;
+  border: 1rpx solid rgba(31, 138, 112, 0.35);
+  border-radius: 16rpx;
+  background: #ffffff;
+}
+
+.analysis-head,
+.signing-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
 .progress-bar {
   height: 18rpx;
   margin: 20rpx 0;
@@ -461,4 +501,137 @@ textarea {
 
 .report-result:last-child {
   border-bottom: 0;
+}
+
+.signing-group {
+  margin-top: 24rpx;
+}
+
+.signing-ai-button {
+  margin-top: 20rpx;
+}
+
+.signing-analysis-card {
+  margin-top: 20rpx;
+  background: #f8fbfa;
+}
+
+.signing-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  margin-bottom: 10rpx;
+  color: #17211f;
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+.signing-title.collapsible {
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #edf2f0;
+}
+
+.signing-title text:last-child {
+  flex: 0 0 auto;
+  color: #66726f;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.signing-item {
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #edf2f0;
+  color: #66726f;
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+
+.signing-question {
+  display: flex;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.signing-question text:first-child {
+  flex: 1;
+}
+
+.signing-question text:last-child {
+  flex: 0 0 auto;
+  color: #9aa6a3;
+}
+
+.signing-question .asked {
+  color: #1f8a70 !important;
+  font-weight: 700;
+}
+
+.signing-question .done {
+  color: #126354 !important;
+  font-weight: 800;
+}
+
+.signing-quick-actions,
+.signing-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+
+.chip-button {
+  width: auto;
+  min-height: 58rpx;
+  margin: 0;
+  padding: 0 18rpx;
+  border: 1rpx solid #dce5e2;
+  border-radius: 999rpx;
+  background: #ffffff;
+  color: #66726f;
+  font-size: 23rpx;
+  line-height: 58rpx;
+}
+
+.chip-button.active {
+  border-color: #126354;
+  background: #eef8f5;
+  color: #126354;
+  font-weight: 800;
+}
+
+.chip-button.muted {
+  color: #9aa6a3;
+}
+
+.signing-detail {
+  margin-top: 16rpx;
+  padding: 18rpx;
+  border-radius: 14rpx;
+  background: #f7faf9;
+}
+
+.signing-detail textarea {
+  min-height: 140rpx;
+  background: #ffffff;
+}
+
+.evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+
+.evidence-item {
+  position: relative;
+  height: 132rpx;
+  overflow: hidden;
+  border-radius: 12rpx;
+  background: #edf2f0;
+}
+
+.evidence-item image {
+  width: 100%;
+  height: 100%;
 }

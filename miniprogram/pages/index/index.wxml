@@ -31,7 +31,10 @@
       <text class="label">看房备注</text>
       <textarea value="{{form.note}}" data-field="note" bindinput="updateField" placeholder="请输入看房备注"></textarea>
 
-      <button class="primary" bindtap="saveHome">保存房源</button>
+      <view class="form-actions">
+        <button class="secondary" bindtap="newHome">新建房源</button>
+        <button class="primary" bindtap="saveHome">保存房源</button>
+      </view>
     </view>
 
     <view class="saved">
@@ -76,7 +79,12 @@
         </view>
       </view>
 
-      <textarea class="field-note" value="{{fieldNote}}" bindinput="updateFieldNote" placeholder="请输入现场记录"></textarea>
+      <textarea
+        class="field-note"
+        value="{{fieldNote}}"
+        bindinput="updateFieldNote"
+        placeholder="{{currentStep.id === 'window' ? '请描述噪音情况，例如临街车流、楼上脚步声、关窗后是否变小、白天/夜间是否复测。' : '请输入现场记录'}}"
+      ></textarea>
       <button class="primary" loading="{{aiLoading}}" bindtap="completeStep">完成本项检测并 AI 分析</button>
 
       <view wx:if="{{currentResult}}" class="mini-result">
@@ -84,10 +92,10 @@
       </view>
 
       <view class="step-list">
-        <view wx:for="{{steps}}" wx:key="id" class="step-item {{index === currentStepIndex ? 'active' : ''}}" bindtap="goStep" data-index="{{index}}">
+        <view wx:for="{{stepViews}}" wx:key="id" class="step-item {{index === currentStepIndex ? 'active' : ''}}" bindtap="goStep" data-index="{{index}}">
           <text>{{index + 1}}</text>
           <view>{{item.name}}</view>
-          <text>{{scanResults[item.id] ? '已记录' : '待检测'}}</text>
+          <text>{{item.recorded ? '已记录' : '待检测'}}</text>
         </view>
       </view>
     </view>
@@ -104,32 +112,32 @@
         <button class="secondary small-button" loading="{{aiLoading}}" bindtap="completeStep">分析当前项</button>
       </view>
 
-      <view wx:for="{{steps}}" wx:key="id" class="ai-card {{scanResults[item.id].ai ? 'ready' : ''}}">
+      <view wx:for="{{stepViews}}" wx:key="id" class="ai-card {{item.ai ? 'ready' : ''}}">
         <view class="ai-card-head">
           <view>
             <view class="ai-step-name">{{index + 1}}. {{item.name}}</view>
             <view class="home-meta">{{item.method}}</view>
           </view>
-          <view class="risk-pill">{{scanResults[item.id].ai ? scanResults[item.id].ai.level : (scanResults[item.id] ? '待分析' : '未检测')}}</view>
+          <view class="risk-pill">{{item.level}}</view>
         </view>
 
-        <view wx:if="{{scanResults[item.id].ai}}">
-          <view class="ai-title">{{scanResults[item.id].ai.title}}</view>
+        <view wx:if="{{item.ai}}">
+          <view class="ai-title">{{item.ai.title}}</view>
           <view class="ai-block">
             <text class="ai-label">居住影响</text>
-            <text>{{scanResults[item.id].ai.livingImpact || '暂无'}}</text>
+            <text>{{item.ai.livingImpact || '暂无'}}</text>
           </view>
           <view class="ai-block">
             <text class="ai-label">建议追问</text>
-            <text wx:for="{{scanResults[item.id].ai.askLandlord}}" wx:key="*this">• {{item}}</text>
+            <text wx:for="{{item.ai.askLandlord}}" wx:for-item="question" wx:key="*this">• {{question}}</text>
           </view>
           <view class="ai-block">
             <text class="ai-label">还需补查</text>
-            <text wx:for="{{scanResults[item.id].ai.missingChecks}}" wx:key="*this">• {{item}}</text>
+            <text wx:for="{{item.ai.missingChecks}}" wx:for-item="missing" wx:key="*this">• {{missing}}</text>
           </view>
         </view>
 
-        <view wx:elif="{{scanResults[item.id]}}" class="empty-state">
+        <view wx:elif="{{item.recorded}}" class="empty-state">
           已记录照片或文字，但还没有 AI 结论。切到现场检测页，点“完成本项检测并 AI 分析”。
         </view>
 
@@ -162,11 +170,119 @@
         <text>{{advice}}</text>
       </view>
 
+      <button class="primary" loading="{{homeAnalysisLoading}}" bindtap="generateHomeAnalysis">生成房源分析 AI</button>
+
+      <view wx:if="{{homeAnalysis}}" class="analysis-card">
+        <view class="analysis-head">
+          <view>
+            <view class="section-title">{{homeAnalysis.verdict || '房源分析'}}</view>
+            <view class="home-meta">AI 综合建议</view>
+          </view>
+          <view class="score small-score">{{homeAnalysis.overallScore || score}}</view>
+        </view>
+        <view class="ai-block">
+          <text class="ai-label">总结</text>
+          <text>{{homeAnalysis.summary}}</text>
+        </view>
+        <view class="ai-block">
+          <text class="ai-label">主要风险</text>
+          <text wx:for="{{homeAnalysis.mainRisks}}" wx:key="name">• {{item.name}}：{{item.reason}}</text>
+        </view>
+        <view class="ai-block">
+          <text class="ai-label">签约前确认</text>
+          <text wx:for="{{homeAnalysis.beforeSigning}}" wx:key="*this">• {{item}}</text>
+        </view>
+        <view class="ai-block">
+          <text class="ai-label">议价点</text>
+          <text wx:for="{{homeAnalysis.negotiationPoints}}" wx:key="*this">• {{item}}</text>
+        </view>
+      </view>
+
       <view class="report-card">
         <view class="section-title">检测结果</view>
-        <view wx:for="{{steps}}" wx:key="id" class="report-result">
+        <view wx:for="{{stepViews}}" wx:key="id" class="report-result">
           <text>{{item.name}}</text>
-          <text>{{scanResults[item.id].ai ? scanResults[item.id].ai.level : (scanResults[item.id] ? '已记录' : '待检测')}}</text>
+          <text>{{item.reportStatus}}</text>
+        </view>
+      </view>
+
+      <view class="report-card">
+        <view class="signing-head">
+          <view>
+            <view class="section-title">签约前提醒</view>
+            <view class="home-meta">已问过 {{askedCount}} 项 · 已留证 {{signingProgress}}%</view>
+          </view>
+        </view>
+        <button class="primary signing-ai-button" loading="{{signingAnalysisLoading}}" bindtap="generateSigningAnalysis">AI 分析签约风险</button>
+        <view wx:if="{{signingAnalysis}}" class="analysis-card signing-analysis-card">
+          <view class="analysis-head">
+            <view>
+              <view class="section-title">签约风险分析</view>
+              <view class="home-meta">完整度 {{signingAnalysis.completeness || 0}}%</view>
+            </view>
+          </view>
+          <view class="ai-block">
+            <text class="ai-label">定金建议</text>
+            <text>{{signingAnalysis.depositAdvice}}</text>
+          </view>
+          <view class="ai-block">
+            <text class="ai-label">主要风险</text>
+            <text wx:for="{{signingAnalysis.trapRisks}}" wx:key="*this">• {{item}}</text>
+          </view>
+          <view class="ai-block">
+            <text class="ai-label">还没问清楚</text>
+            <text wx:for="{{signingAnalysis.missingCriticalChecks}}" wx:key="*this">• {{item}}</text>
+          </view>
+          <view class="ai-block">
+            <text class="ai-label">必须写进合同</text>
+            <text wx:for="{{signingAnalysis.mustGetInWriting}}" wx:key="*this">• {{item}}</text>
+          </view>
+          <view class="ai-block">
+            <text class="ai-label">下一步</text>
+            <text wx:for="{{signingAnalysis.nextActions}}" wx:key="*this">• {{item}}</text>
+          </view>
+        </view>
+        <view wx:for="{{signingViewGroups}}" wx:key="title" class="signing-group">
+          <view class="signing-title collapsible" bindtap="toggleSigningGroup" data-title="{{item.title}}">
+            <text>{{item.title}}</text>
+            <text>问过 {{item.askedCount}} / 留证 {{item.confirmedCount}} {{expandedSigningGroup === item.title ? '收起' : '展开'}}</text>
+          </view>
+          <view wx:if="{{expandedSigningGroup === item.title}}">
+            <view wx:for="{{item.items}}" wx:for-item="question" wx:key="key" class="signing-item">
+              <view class="signing-question" bindtap="toggleSigningQuestion" data-key="{{question.key}}">
+                <text>{{question.question}}</text>
+                <text class="{{question.status === '已留证' ? 'done' : (question.status === '已问过' ? 'asked' : '')}}">
+                  {{question.status}}
+                </text>
+              </view>
+              <view class="signing-quick-actions">
+                <button class="chip-button {{question.status === '已问过' ? 'active' : ''}}" catchtap="markSigningAsked" data-key="{{question.key}}">已问过</button>
+                <button class="chip-button {{question.status === '已留证' ? 'active' : ''}}" catchtap="markSigningEvidence" data-key="{{question.key}}">已留证</button>
+                <button class="chip-button" catchtap="toggleSigningQuestion" data-key="{{question.key}}">记录回答</button>
+                <button class="chip-button muted" catchtap="resetSigningItem" data-key="{{question.key}}">重置</button>
+              </view>
+              <view wx:if="{{expandedSigningQuestion === question.key}}" class="signing-detail">
+                <textarea
+                  value="{{question.answer}}"
+                  data-key="{{question.key}}"
+                  bindinput="updateSigningAnswer"
+                  placeholder="可选：记录房东怎么回答，例如退租后 7 天内退押金。"
+                ></textarea>
+                <view class="signing-detail-actions">
+                  <button class="chip-button {{question.writtenInContract ? 'active' : ''}}" catchtap="toggleSigningWritten" data-key="{{question.key}}">
+                    {{question.writtenInContract ? '已写进合同' : '未写进合同'}}
+                  </button>
+                  <button class="chip-button active" catchtap="chooseSigningEvidence" data-key="{{question.key}}">上传留证</button>
+                </view>
+                <view wx:if="{{question.evidenceCount > 0}}" class="evidence-grid">
+                  <view wx:for="{{question.evidence}}" wx:for-item="evidence" wx:key="url" class="evidence-item">
+                    <image src="{{evidence.url}}" mode="aspectFill"></image>
+                    <button class="delete-photo" catchtap="deleteSigningEvidence" data-key="{{question.key}}" data-index="{{index}}">×</button>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
         </view>
       </view>
     </view>

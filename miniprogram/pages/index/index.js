@@ -151,7 +151,6 @@ Page({
 
   switchTab(event) {
     this.setData({ activeTab: event.currentTarget.dataset.tab });
-    this.refreshSelectedHome();
   },
 
   updateField(event) {
@@ -331,6 +330,15 @@ Page({
 
     const step = this.data.currentStep;
     const existing = getResult(this.data.scanResults, step.id) || {};
+    if (existing.ai && (this.data.fieldNote || "") === (existing.note || "")) {
+      this.setData({
+        activeTab: "checklist",
+        currentResult: existing,
+        currentPhotos: existing.photos || []
+      });
+      wx.showToast({ title: "已有分析结果", icon: "none" });
+      return;
+    }
     const result = {
       ...existing,
       name: step.name,
@@ -582,6 +590,10 @@ Page({
       return;
     }
     if (this.data.signingAnalysisLoading) return;
+    if (this.data.signingAnalysis) {
+      wx.showToast({ title: "已有签约分析", icon: "none" });
+      return;
+    }
     this.setData({ signingAnalysisLoading: true });
     wx.showLoading({ title: "分析签约风险" });
 
@@ -656,6 +668,10 @@ Page({
       return;
     }
     if (this.data.homeAnalysisLoading) return;
+    if (this.data.homeAnalysis) {
+      wx.showToast({ title: "已有房源分析", icon: "none" });
+      return;
+    }
     this.setData({ homeAnalysisLoading: true });
     wx.showLoading({ title: "生成分析中" });
 

@@ -85,7 +85,7 @@
         bindinput="updateFieldNote"
         placeholder="{{currentStep.id === 'window' ? '请描述噪音情况，例如临街车流、楼上脚步声、关窗后是否变小、白天/夜间是否复测。' : '请输入现场记录'}}"
       ></textarea>
-      <button class="primary" loading="{{aiLoading}}" bindtap="completeStep">完成本项检测并 AI 分析</button>
+      <button class="primary" loading="{{aiLoading}}" bindtap="completeStep">{{currentResult.ai ? '查看本项 AI 分析' : '完成本项检测并 AI 分析'}}</button>
 
       <view wx:if="{{currentResult}}" class="mini-result">
         <text>{{currentResult.ai ? currentResult.ai.level : '已保存现场记录，等待 AI 分析'}}</text>
@@ -109,7 +109,7 @@
           <view class="section-title">AI 检查</view>
           <view class="home-meta">{{selectedHome.name || '当前房源'}} · {{completedCount}} / {{steps.length}} 项</view>
         </view>
-        <button class="secondary small-button" loading="{{aiLoading}}" bindtap="completeStep">分析当前项</button>
+        <button class="secondary small-button" loading="{{aiLoading}}" bindtap="completeStep">{{currentResult.ai ? '查看当前项' : '分析当前项'}}</button>
       </view>
 
       <view wx:for="{{stepViews}}" wx:key="id" class="ai-card {{item.ai ? 'ready' : ''}}">
@@ -170,7 +170,7 @@
         <text>{{advice}}</text>
       </view>
 
-      <button class="primary" loading="{{homeAnalysisLoading}}" bindtap="generateHomeAnalysis">生成房源分析 AI</button>
+      <button class="primary" loading="{{homeAnalysisLoading}}" bindtap="generateHomeAnalysis">{{homeAnalysis ? '已生成房源分析' : '生成房源分析 AI'}}</button>
 
       <view wx:if="{{homeAnalysis}}" class="analysis-card">
         <view class="analysis-head">
@@ -213,7 +213,7 @@
             <view class="home-meta">已问过 {{askedCount}} 项 · 已留证 {{signingProgress}}%</view>
           </view>
         </view>
-        <button class="primary signing-ai-button" loading="{{signingAnalysisLoading}}" bindtap="generateSigningAnalysis">AI 分析签约风险</button>
+        <button class="primary signing-ai-button" loading="{{signingAnalysisLoading}}" bindtap="generateSigningAnalysis">{{signingAnalysis ? '已生成签约分析' : 'AI 分析签约风险'}}</button>
         <view wx:if="{{signingAnalysis}}" class="analysis-card signing-analysis-card">
           <view class="analysis-head">
             <view>

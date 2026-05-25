@@ -206,7 +206,7 @@ async function callDeepSeek(payload) {
         ],
         response_format: { type: "json_object" },
         temperature: 0.2,
-        max_tokens: 1800,
+        max_tokens: Number(process.env.AI_MAX_TOKENS || 900),
       }),
     });
   } catch (error) {
